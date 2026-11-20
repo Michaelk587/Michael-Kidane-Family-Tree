@@ -246,8 +246,9 @@ for (let i = 0; i < lineageA.length; i++) {
             degreeText = "2nd"
         } else if (cousinDegree === 3) {
             degreeText = "3rd"
-}else if (cousinDegree === 3) {
-            degreeText = "3rd"
+}
+			else {
+    degreeText = cousinDegree + "th"
         }
 
         if (removed === 0) {
