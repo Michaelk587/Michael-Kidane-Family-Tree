@@ -1,0 +1,255 @@
+class Person {
+	constructor(name, parent = null) {
+		this.name = name
+		this.parent = parent
+		this.drawPosition = null
+	}
+
+	// Get a list of all this person's children 
+	findChildren(relatives) {
+		let children = []
+		relatives.forEach(person => {
+			if (person.parent == this) {
+				children.push(person)
+			}
+		})
+		return children
+	}
+	
+	// Get a list of this person's ancestors, ordered from youngest to oldest
+	getLineage() {
+		let ancestors = []
+		let currentParent = this.parent
+		while(currentParent) {
+			ancestors.push(currentParent)
+			currentParent = currentParent.parent
+		}
+		return ancestors
+	}
+	
+	depthToAncestor(ancestor) {
+		if (ancestor == this) {
+			return 0
+		}
+		let lineage = this.getLineage()
+		let depth = lineage.findIndex(person => person == ancestor)
+		if (depth >= 0) {
+			return depth + 1
+		}
+		return -1
+	}
+	
+	// Draw the person on the screen at the given position
+	draw(x, y) {
+		// save our drawn position in case anyone needs it.
+		if (x && y) {
+			this.drawPosition = createVector(x, y)
+		}
+		
+		if (this.drawPosition) {			
+			push()
+			textAlign(CENTER, CENTER)
+			textStyle(BOLD)
+			fill('rgb(243,208,208)')
+			rect(x - 30, y - 10, 60, 20)
+			fill('black')
+			text(`${this.name}`, this.drawPosition.x, this.drawPosition.y)
+			pop()
+		}
+	}
+}
+// Find the top person with no parent
+function findOrginalPerson(relatives) {
+	return relatives.find(person => person.parent === null)
+}
+let john = new Person('John')
+let paul = new Person('Paul', john)
+let peter = new Person('Peter', john)                                                                                                                                          
+
+
+
+let sarah = new Person('Sarah', john)
+let mike = new Person('Mike', john)
+let chris = new Person('Christopher', sarah)
+let charles = new Person('Charles', sarah)
+let sue = new Person('Sue', sarah)
+let dave = new Person('Dave', peter)
+let kevin = new Person('Kevin', dave)
+let tom = new Person('Tom', peter)
+let tim = new Person('Tim', charles)
+let jim = new Person('Jim', tim)
+let jasper = new Person('Jasper', paul)
+let steve = new Person('steve', jasper)
+let kim = new Person('Kim', jasper)
+
+
+let family = [kim, steve, jasper, kevin, jim, john, paul, peter, sarah, chris, mike, charles, sue, dave, tom, tim]
+
+function setup() {
+	createCanvas(windowWidth, windowHeight)
+	drawFamilyTree(family)
+
+	// Select 2 people in the family
+	let a = random(family)
+	let b = random(family)
+
+	// Visualize the relationship in the tree
+	drawRelationshipBetween(a, b)
+	a.draw()
+	b.draw()
+	
+	// Some example of visualizing the properties of the relations between a and b
+	print(`${a.name}'s lineage is '${a.getLineage().map(person => person.name).join('->')}'`)
+	print(`${b.name}'s lineage is '${b.getLineage().map(person => person.name).join('->')}'`)
+	print(`${b.name}'s depth to ${a.name}'s is ${b.depthToAncestor(a)}`)
+
+	// Figure out the relationship and print it out
+	print(`How is ${a.name} related to ${b.name}?`)
+	let relationship = calculateRelationShipBetween(a, b)
+	print(`${a.name} is the ${relationship} of ${b.name}`)
+}
+const TOP_Y = 50 // The top (y) position of the tree
+const VERTICAL_GAP = 50 // vertical spacing between generations
+
+// Draw the given relatives in a family tree
+function drawFamilyTree(relatives) {
+	// find the "spawner" patriarch/matriarch
+	let originalPerson = findOrginalPerson(relatives)
+	if (originalPerson) {
+		drawParentAndChildren(originalPerson, relatives, 0, windowWidth / 2, windowWidth)
+	}
+	else {
+		print("WTF, there is no original person in this family")
+	}
+}
+
+// Recursively draw a parent and children
+function drawParentAndChildren(parent, relatives, level, x, width) {
+	// draw the parent node
+	let y = TOP_Y + level * VERTICAL_GAP
+	
+	// find children and draw them
+	let children = parent.findChildren(relatives)
+	let n = children.length
+	let xGap = width / n
+	let xStart = x - width / 2
+	children.forEach((child, i) => {
+		let childX = xStart + xGap * (i + 0.5)
+		drawParentAndChildren(child, relatives, level + 1, childX, xGap)
+		
+		// draw a line connecting the parent node to the child node
+		push()
+		stroke('blue')
+		line(x, y, childX, TOP_Y + (level + 1) * VERTICAL_GAP)
+		pop()
+	})
+	parent.draw(x, y)
+}
+
+// Draw indicator of the relation between 2 people
+function drawRelationshipBetween(fromPerson, toPerson) {
+	// Check if both people have a drawn position
+	if (fromPerson.drawPosition && toPerson.drawPosition) {
+		drawArrow(fromPerson.drawPosition, toPerson.drawPosition.sub(fromPerson.drawPosition), 'red')
+	}
+}
+
+// Draws an arrow between two vectors.
+function drawArrow(base, vec, myColor) {
+  push();
+  stroke(myColor);
+  strokeWeight(3);
+  fill(myColor);
+  translate(base.x, base.y);
+  line(0, 0, vec.x, vec.y);
+  rotate(vec.heading());
+  let arrowSize = 7;
+  translate(vec.mag() - arrowSize, 0);
+  triangle(0, arrowSize / 2, 0, -arrowSize / 2, arrowSize, 0);
+  pop();
+}
+function calculateRelationShipBetween(personA, personB) {
+	
+	if (personA === personB) {
+		return "same person"
+
+		
+	}
+	//Repeat great
+	function getGreatPrefix(depth) {
+    if (depth <= 2) return ""
+    return "great-".repeat(depth - 3) + "great"
+	}
+	
+	    let depthToA = personB.depthToAncestor(personA)
+	if (depthToA === 1){
+		return "parent"
+} else if (depthToA >= 2){
+		return `${getGreatPrefix(depthToA)}grandparent`
+
+
+
+		
+	}
+	    let depthToB = personA.depthToAncestor(personB)
+	if (depthToB === 1){
+		return "child"
+	} else if (depthToB >= 2){
+		return `${getGreatPrefix(depthToB)}grandchild`
+
+
+		
+	}
+	if (personA.parent !== null && personA.parent === personB.parent){
+		return "sibling"
+
+
+		
+	}
+	if (personA.parent !== null){
+		let depthFromBToParentA= personB.depthToAncestor(personA.parent)
+		if (depthFromBToParentA>= 2){
+			return `${getGreatPrefix(depthFromBToParentA)}aunt/uncle`
+
+
+
+			
+		}
+	}
+	if (personB.parent !== null){
+		let depthFromAToParentB = personA.depthToAncestor(personB.parent)
+		if (depthFromAToParentB >= 2){
+			return `${getGreatPrefix(depthFromAToParentB)}niece/nephew`
+
+
+
+			
+		}
+	}let lineageA = personA.getLineage()
+let lineageB = personB.getLineage()
+
+for (let i = 0; i < lineageA.length; i++) {
+    let sharedAncestor = lineageA[i]
+
+    if (lineageB.includes(sharedAncestor)) {
+        
+        let depthA= personA.depthToAncestor(sharedAncestor)
+        let depthB= personB.depthToAncestor(sharedAncestor)
+        let smallerDepth= Math.min(depthA, depthB)
+        let cousinDegree= smallerDepth - 1
+        let removed= Math.abs(depthA - depthB)
+
+        let degreeText = ""
+        if (cousinDegree === 1) {
+            degreeText = "1st"
+        } else if (cousinDegree === 2) {
+            degreeText = "2nd"
+        } else if (cousinDegree === 3) {
+            degreeText = "3rd"
+        }
+
+        if (removed === 0) {
+            return degreeText + " cousin"
+        } else {
+            return degreeText + " cousin " + removed + "x removed"
+        }}}}
